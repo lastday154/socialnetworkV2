@@ -31,7 +31,14 @@ functions:
     handler: friends/create.create
     events:
       - http:
-          path: friends
+          path: friends/create
+          method: post
+          cors: true
+  get:
+    handler: friends/get.get
+    events:
+      - http:
+          path: friends/get
           method: post
           cors: true
 plugins:
