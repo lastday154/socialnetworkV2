@@ -14,5 +14,8 @@
   "devDependencies": {
     "serverless-offline": "^3.25.9",
     "aws-sdk": "^2.303.0"
+  },
+  "dependencies": {
+    "md5": "^2.2.1"
   }
 }
