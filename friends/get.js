@@ -2,6 +2,8 @@
 
 const md5 = require("md5");
 const dynamoDb = require("./dynamodb");
+const { getEmailsByIds } = require("./helper");
+
 module.exports.get = (event, context, callback) => {
   const data = JSON.parse(event.body);
   const email = data.email;
@@ -39,45 +41,9 @@ module.exports.get = (event, context, callback) => {
         })
       });
     }
-    let userIds = {};
-    let index = 0;
-    result.Items.forEach(function(item) {
-      index++;
-      let userIdKey = ":userId" + index;
-      userIds[userIdKey.toString()] = item.friendId;
+    const ids = result.Items.map(item => {
+      return item.friendId;
     });
-
-    const params = {
-      TableName: process.env.USER_TABLE,
-      FilterExpression: "userId IN (" + Object.keys(userIds).toString() + ")",
-      ExpressionAttributeValues: userIds
-    };
-    dynamoDb.scan(params, (error, result) => {
-      // handle potential errors
-      if (error) {
-        console.error(error);
-        callback(null, {
-          statusCode: error.statusCode || 501,
-          body: JSON.stringify({
-            success: false,
-            message: "Couldn't fetch emails"
-          })
-        });
-        return;
-      }
-      // create a response
-      const friends = result.Items.map(item => {
-        return item.email;
-      });
-      const response = {
-        statusCode: 200,
-        body: JSON.stringify({
-          success: true,
-          count: result.Count,
-          friends
-        })
-      };
-      callback(null, response);
-    });
+    getEmailsByIds(process.env.USER_TABLE, ids, callback);
   });
 };

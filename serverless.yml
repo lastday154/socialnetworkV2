@@ -41,6 +41,13 @@ functions:
           path: friends/get
           method: post
           cors: true
+  common:
+    handler: friends/common.common
+    events:
+      - http:
+          path: friends/common
+          method: post
+          cors: true
 plugins:
   - serverless-offline
 package:
