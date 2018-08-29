@@ -1,0 +1,85 @@
+# serverless.yml
+
+service: friends-management
+
+custom:
+  userTableName: "user-${self:provider.stage}"
+  friendTableName: "friend-${self:provider.stage}"
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  stage: dev
+  region: us-east-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - { "Fn::GetAtt": ["UserDynamoDBTable", "Arn"] }
+        - { "Fn::GetAtt": ["FriendDynamoDBTable", "Arn"] }
+  environment:
+    USER_TABLE: ${self:custom.userTableName}
+    FRIEND_TABLE: ${self:custom.friendTableName}
+functions:
+  create:
+    handler: friends/create.create
+    events:
+      - http:
+          path: friends
+          method: post
+          cors: true
+plugins:
+  - serverless-offline
+package:
+  exclude:
+    - test/**
+resources:
+  Resources:
+    UserDynamoDBTable:
+      Type: "AWS::DynamoDB::Table"
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.userTableName}
+    FriendDynamoDBTable:
+      Type: "AWS::DynamoDB::Table"
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: friendId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+          - AttributeName: friendId
+            KeyType: "RANGE"
+        GlobalSecondaryIndexes:
+          - IndexName: "friend-index"
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+              - AttributeName: friendId
+                KeyType: RANGE
+            Projection:
+              ProjectionType: "ALL"
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.friendTableName}
