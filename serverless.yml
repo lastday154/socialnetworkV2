@@ -48,6 +48,20 @@ functions:
           path: friends/common
           method: post
           cors: true
+  subscribe:
+    handler: friends/subscribe.subscribe
+    events:
+      - http:
+          path: friends/subscribe
+          method: post
+          cors: true
+  block:
+    handler: friends/block.block
+    events:
+      - http:
+          path: friends/block
+          method: post
+          cors: true
 plugins:
   - serverless-offline
 package:

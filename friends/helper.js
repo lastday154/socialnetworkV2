@@ -1,6 +1,7 @@
 "use strict";
 
 const dynamoDb = require("./dynamodb");
+const md5 = require("md5");
 
 function getCommonIds(items, ids) {
   const friendList1 = [];
@@ -65,8 +66,68 @@ const getEmailsByIds = (tableName, ids, callback) => {
   });
 };
 
+function updateRelationship(data, relationshipType, callback) {
+  const { requestor: requestorEmail, target: targetEmail } = data;
+  const requestorId = md5(requestorEmail);
+  const targetId = md5(targetEmail);
+  const params = {
+    RequestItems: {}
+  };
+  params.RequestItems[process.env.USER_TABLE] = [
+    {
+      PutRequest: {
+        Item: {
+          userId: requestorId,
+          email: requestorEmail
+        }
+      }
+    },
+    {
+      PutRequest: {
+        Item: {
+          userId: targetId,
+          email: targetId
+        }
+      }
+    }
+  ];
+  params.RequestItems[process.env.FRIEND_TABLE] = [
+    {
+      PutRequest: {
+        Item: {
+          userId: requestorId,
+          friendId: targetId,
+          type: relationshipType
+        }
+      }
+    }
+  ];
+  dynamoDb.batchWrite(params, (error, data) => {
+    // handle potential errors
+    if (error) {
+      console.error(error);
+      callback(null, {
+        statusCode: error.statusCode || 501,
+        body: {
+          success: true,
+          message: "Couldn't subscribe"
+        }
+      });
+      return;
+    }
+    // create a response
+    const response = {
+      statusCode: 200,
+      body: JSON.stringify({
+        success: true
+      })
+    };
+    callback(null, response);
+  });
+}
 module.exports = {
   getEmailsByIds,
   createInQueryParams,
-  getCommonIds
+  getCommonIds,
+  updateRelationship
 };

@@ -2,23 +2,18 @@
 
 const { updateRelationship } = require("./helper");
 
-module.exports.create = (event, context, callback) => {
+module.exports.block = (event, context, callback) => {
   const data = JSON.parse(event.body);
-  if (!data.friends) {
+  if (!data.requestor || !data.target) {
     console.error("Validation Failed");
     callback(null, {
       statusCode: 400,
       body: {
         success: true,
-        message: "Couldn't create friends"
+        message: "Couldn't block because parameter missing"
       }
     });
     return;
   }
-  const emails = data.friends;
-  updateRelationship(
-    { requestor: emails[0], target: emails[1] },
-    "friend",
-    callback
-  );
+  updateRelationship(data, "block", callback);
 };
