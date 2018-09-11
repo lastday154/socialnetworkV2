@@ -6,14 +6,16 @@
   "scripts": {
     "start": "./node_modules/.bin/serverless offline -s dev",
     "debug": "export SLS_DEBUG=* && node --inspect ./node_modules/.bin/serverless offline -s dev --port 3000",
-    "test": "mocha 'test/**/*.spec.js'"
+    "test": "mocha 'test/**/*.spec.js'",
+    "deploy": "serverless deploy"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "serverless-offline": "^3.25.9",
-    "aws-sdk": "^2.303.0"
+    "aws-sdk": "^2.303.0",
+    "serverless": "^1.30.3",
+    "serverless-offline": "^3.25.9"
   },
   "dependencies": {
     "md5": "^2.2.1"
