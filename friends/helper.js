@@ -58,7 +58,10 @@ const getRecipients = (tableName, ids, text, callback) => {
     let friends = result.Items.map(item => {
       return item.email;
     });
-    friends = friends.concat(extractEmails(text));
+    const emails = extractEmails(text);
+    if (emails) {
+      friends = friends.concat(extractEmails(text));
+    }
     const response = {
       statusCode: 200,
       body: JSON.stringify({
@@ -148,6 +151,7 @@ function updateRelationship(data, relationshipType, callback) {
           }
         }
       ];
+      break;
     default:
       params.RequestItems[process.env.FRIEND_TABLE] = [
         {
@@ -161,7 +165,6 @@ function updateRelationship(data, relationshipType, callback) {
         }
       ];
   }
-
   dynamoDb.batchWrite(params, (error, data) => {
     // handle potential errors
     if (error) {
@@ -190,5 +193,6 @@ module.exports = {
   createInQueryParams,
   getCommonIds,
   updateRelationship,
-  getRecipients
+  getRecipients,
+  extractEmails
 };

@@ -40,6 +40,7 @@ module.exports.get = (event, context, callback) => {
           message: "There is no friends for the given email"
         })
       });
+      return;
     }
     const ids = result.Items.map(item => {
       return item.friendId;

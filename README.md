@@ -114,7 +114,7 @@ The API should receive the following JSON request:
 
 ```
 {
-  "emai": "andy@example.com"
+  "email": "andy@example.com"
 }
 ```
 
