@@ -35,6 +35,41 @@ function createInQueryParams(tableName, ids) {
   return params;
 }
 
+function extractEmails(text) {
+  return text.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi);
+}
+
+const getRecipients = (tableName, ids, text, callback) => {
+  const params = createInQueryParams(tableName, ids);
+  dynamoDb.scan(params, (error, result) => {
+    // handle potential errors
+    if (error) {
+      console.error(error);
+      callback(null, {
+        statusCode: error.statusCode || 501,
+        body: JSON.stringify({
+          success: false,
+          message: "Couldn't fetch emails"
+        })
+      });
+      return;
+    }
+    // create a response
+    let friends = result.Items.map(item => {
+      return item.email;
+    });
+    friends = friends.concat(extractEmails(text));
+    const response = {
+      statusCode: 200,
+      body: JSON.stringify({
+        success: true,
+        recipients: friends
+      })
+    };
+    callback(null, response);
+  });
+};
+
 const getEmailsByIds = (tableName, ids, callback) => {
   const params = createInQueryParams(tableName, ids);
   dynamoDb.scan(params, (error, result) => {
@@ -86,22 +121,47 @@ function updateRelationship(data, relationshipType, callback) {
       PutRequest: {
         Item: {
           userId: targetId,
-          email: targetId
+          email: targetEmail
         }
       }
     }
   ];
-  params.RequestItems[process.env.FRIEND_TABLE] = [
-    {
-      PutRequest: {
-        Item: {
-          userId: requestorId,
-          friendId: targetId,
-          type: relationshipType
+  switch (relationshipType) {
+    case "friend":
+      params.RequestItems[process.env.FRIEND_TABLE] = [
+        {
+          PutRequest: {
+            Item: {
+              userId: requestorId,
+              friendId: targetId,
+              type: relationshipType
+            }
+          }
+        },
+        {
+          PutRequest: {
+            Item: {
+              userId: targetId,
+              friendId: requestorId,
+              type: relationshipType
+            }
+          }
         }
-      }
-    }
-  ];
+      ];
+    default:
+      params.RequestItems[process.env.FRIEND_TABLE] = [
+        {
+          PutRequest: {
+            Item: {
+              userId: requestorId,
+              friendId: targetId,
+              type: relationshipType
+            }
+          }
+        }
+      ];
+  }
+
   dynamoDb.batchWrite(params, (error, data) => {
     // handle potential errors
     if (error) {
@@ -129,5 +189,6 @@ module.exports = {
   getEmailsByIds,
   createInQueryParams,
   getCommonIds,
-  updateRelationship
+  updateRelationship,
+  getRecipients
 };

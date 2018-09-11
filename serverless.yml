@@ -62,6 +62,13 @@ functions:
           path: friends/block
           method: post
           cors: true
+  retrieve:
+    handler: friends/retrieve.retrieve
+    events:
+      - http:
+          path: friends/retrieve
+          method: post
+          cors: true
 plugins:
   - serverless-offline
 package:
